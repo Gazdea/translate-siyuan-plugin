@@ -1,7 +1,6 @@
 const path = require("path");
 const fs = require("fs");
 const webpack = require("webpack");
-const {EsbuildPlugin} = require("esbuild-loader");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 const ZipPlugin = require("zip-webpack-plugin");
@@ -76,9 +75,9 @@ module.exports = (env, argv) => {
                     include: [path.resolve(__dirname, "src")],
                     use: [
                         {
-                            loader: "esbuild-loader",
+                            loader: "ts-loader",
                             options: {
-                                target: "es6",
+                                transpileOnly: true,
                             }
                         },
                     ],
