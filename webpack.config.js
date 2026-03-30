@@ -56,9 +56,10 @@ module.exports = (env, argv) => {
         output: {
             filename: "[name].js",
             path: path.resolve(__dirname),
-            libraryTarget: "commonjs2",
+            libraryTarget: "commonjs",
             library: {
-                type: "commonjs2",
+                name: "LibreTranslatePlugin",
+                type: "commonjs",
             },
         },
         externals: {

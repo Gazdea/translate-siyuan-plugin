@@ -16,7 +16,7 @@ import {TranslateDialog} from "./ui/translateDialog";
 
 const STORAGE_NAME = "settings";
 
-export default class LibreTranslatePlugin extends Plugin {
+class LibreTranslatePlugin extends Plugin {
 
     private settings: PluginSettings = {...DEFAULT_SETTINGS};
     private translator: LibreTranslate;
@@ -281,3 +281,5 @@ export default class LibreTranslatePlugin extends Plugin {
         return options;
     }
 }
+
+export default LibreTranslatePlugin;
