@@ -56,21 +56,15 @@ module.exports = (env, argv) => {
         output: {
             filename: "[name].js",
             path: path.resolve(__dirname),
-            libraryTarget: "commonjs",
-            library: {
-                name: "LibreTranslatePlugin",
-                type: "commonjs",
-            },
+            libraryTarget: "commonjs2",
+            libraryExport: "default",
         },
         externals: {
             siyuan: "siyuan",
         },
         entry,
         optimization: {
-            minimize: true,
-            minimizer: [
-                new EsbuildPlugin(),
-            ],
+            minimize: false,
         },
         resolve: {
             extensions: [".ts", ".scss", ".js", ".json"],
