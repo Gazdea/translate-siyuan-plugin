@@ -11,9 +11,9 @@ function copyPluginFiles() {
     }
 
     const filesToCopy = [
-        {from: "plugin.json", to: outDir},
-        {from: "icon.png", to: outDir},
-        {from: "preview.png", to: outDir},
+        {from: "plugin.json", to: outDir + "/plugin.json"},
+        {from: "icon.png", to: outDir + "/icon.png"},
+        {from: "preview.png", to: outDir + "/preview.png"},
     ];
 
     filesToCopy.forEach(({from, to}) => {
@@ -47,7 +47,7 @@ export default defineConfig({
             fileName: "index",
         },
         rollupOptions: {
-            external: ["siyuan"],
+            external: ["siyuan", "process"],
             output: {
                 entryFileNames: "index.js",
                 exports: "named",
