@@ -27,9 +27,8 @@ class LibreTranslatePlugin extends Plugin {
     private eventBusClickEditorContent: any = this.handleClickEditorContent.bind(this);
     private eventBusPaste: any = this.handlePaste.bind(this);
 
-    constructor() {
-        super();
-        this.translator = new LibreTranslate(this.settings.apiUrl, this.settings.apiKey);
+    constructor(app: any) {
+        super(app);
     }
 
     async onload() {

@@ -1,19 +1,14 @@
 import {defineConfig} from "vite";
 import {resolve} from "path";
-import {copyFileSync, mkdirSync, existsSync, readdirSync, cpSync} from "fs";
+import {copyFileSync, mkdirSync, existsSync, cpSync} from "fs";
 
 const isPro = process.env.NODE_ENV === "production";
-const outDir = "dist";
 
 function copyPluginFiles() {
-    if (!existsSync(outDir)) {
-        mkdirSync(outDir, {recursive: true});
-    }
-
     const filesToCopy = [
-        {from: "plugin.json", to: outDir + "/plugin.json"},
-        {from: "icon.png", to: outDir + "/icon.png"},
-        {from: "preview.png", to: outDir + "/preview.png"},
+        {from: "plugin.json", to: "plugin.json"},
+        {from: "icon.png", to: "icon.png"},
+        {from: "preview.png", to: "preview.png"},
     ];
 
     filesToCopy.forEach(({from, to}) => {
@@ -25,12 +20,12 @@ function copyPluginFiles() {
     const readmeFiles = ["README.md", "README_ru_RU.md", "README_zh_CN.md"];
     readmeFiles.forEach(file => {
         if (existsSync(file)) {
-            copyFileSync(file, resolve(outDir, file));
+            copyFileSync(file, resolve(file));
         }
     });
 
     const i18nSrc = "src/i18n";
-    const i18nDest = resolve(outDir, "i18n");
+    const i18nDest = resolve("i18n");
     if (existsSync(i18nSrc)) {
         if (!existsSync(i18nDest)) {
             mkdirSync(i18nDest, {recursive: true});
@@ -47,14 +42,13 @@ export default defineConfig({
             fileName: "index",
         },
         rollupOptions: {
-            external: ["siyuan", "process"],
+            external: ["siyuan"],
             output: {
                 entryFileNames: "index.js",
                 exports: "named",
             },
         },
-        outDir: outDir,
-        emptyOutDir: true,
+        outDir: ".",
         minify: isPro,
     },
     resolve: {

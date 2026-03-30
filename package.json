@@ -8,7 +8,12 @@
     "build": "vite build",
     "lint": "eslint . --fix --cache"
   },
-  "keywords": ["siyuan", "plugin", "translate", "libretranslate"],
+  "keywords": [
+    "siyuan",
+    "plugin",
+    "translate",
+    "libretranslate"
+  ],
   "author": "Gazdea",
   "license": "MIT",
   "devDependencies": {
@@ -18,6 +23,7 @@
     "@typescript-eslint/eslint-plugin": "8.40.0",
     "@typescript-eslint/parser": "8.40.0",
     "eslint": "^9.33.0",
+    "globals": "^17.4.0",
     "sass": "^1.62.1",
     "siyuan": "1.1.8",
     "typescript": "^5.0.0",
