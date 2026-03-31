@@ -1,7 +1,7 @@
-import {Plugin, showMessage, Dialog, Menu, Protyle, IOperation, getAllEditor} from "siyuan";
+import {Plugin, showMessage, Dialog, Menu, Protyle, IOperation, getAllEditor, Setting} from "siyuan";
 import "./index.scss";
 import {LibreTranslate} from "./lib/translator";
-import {PluginSettings, SettingsPanel, DEFAULT_SETTINGS} from "./ui/settings";
+import {PluginSettings, DEFAULT_SETTINGS} from "./ui/settings";
 import {TranslateDialog} from "./ui/translateDialog";
 
 const STORAGE_NAME = "settings";
@@ -10,9 +10,12 @@ class LibreTranslatePlugin extends Plugin {
 
     private settings: PluginSettings = {...DEFAULT_SETTINGS};
     private translator: LibreTranslate;
-    private settingsPanel: SettingsPanel | null = null;
     private translateDialog: TranslateDialog | null = null;
     private eventBusClickEditorContent: (event: any) => void;
+    private apiUrlInput: HTMLInputElement;
+    private apiKeyInput: HTMLInputElement;
+    private sourceLangSelect: HTMLSelectElement;
+    private targetLangSelect: HTMLSelectElement;
 
     constructor(app: any) {
         super(app);
@@ -40,6 +43,74 @@ class LibreTranslatePlugin extends Plugin {
         });
 
         this.eventBus.on("click-editorcontent", this.eventBusClickEditorContent);
+
+        this.initSettings();
+    }
+
+    private initSettings(): void {
+        this.apiUrlInput = document.createElement("input");
+        this.apiUrlInput.className = "b3-text-field fn__block";
+        this.apiUrlInput.value = this.settings.apiUrl;
+
+        this.apiKeyInput = document.createElement("input");
+        this.apiKeyInput.className = "b3-text-field fn__block";
+        this.apiKeyInput.type = "password";
+        this.apiKeyInput.value = this.settings.apiKey;
+
+        this.sourceLangSelect = document.createElement("select");
+        this.sourceLangSelect.className = "b3-select fn__block";
+        this.sourceLangSelect.innerHTML = `<option value="auto">${this.i18n.auto}</option>`;
+        this.sourceLangSelect.value = this.settings.sourceLang;
+
+        this.targetLangSelect = document.createElement("select");
+        this.targetLangSelect.className = "b3-select fn__block";
+        this.targetLangSelect.value = this.settings.targetLang;
+
+        this.setting = new Setting({
+            confirmCallback: () => {
+                this.saveSettings();
+            }
+        });
+
+        this.setting.addItem({
+            title: this.i18n.apiUrl,
+            direction: "row",
+            description: "LibreTranslate API URL",
+            createActionElement: () => {
+                this.apiUrlInput.value = this.settings.apiUrl;
+                return this.apiUrlInput;
+            }
+        });
+
+        this.setting.addItem({
+            title: this.i18n.apiKey,
+            direction: "row",
+            description: "Optional API key",
+            createActionElement: () => {
+                this.apiKeyInput.value = this.settings.apiKey;
+                return this.apiKeyInput;
+            }
+        });
+
+        this.setting.addItem({
+            title: this.i18n.sourceLang,
+            direction: "row",
+            description: this.i18n.auto,
+            createActionElement: () => {
+                this.sourceLangSelect.value = this.settings.sourceLang;
+                return this.sourceLangSelect;
+            }
+        });
+
+        this.setting.addItem({
+            title: this.i18n.targetLang,
+            direction: "row",
+            description: "Target language",
+            createActionElement: () => {
+                this.targetLangSelect.value = this.settings.targetLang;
+                return this.targetLangSelect;
+            }
+        });
     }
 
     async onLayoutReady() {
@@ -66,34 +137,23 @@ class LibreTranslatePlugin extends Plugin {
         }
     }
 
-    private async saveSettings(settings: PluginSettings): Promise<void> {
-        this.settings = settings;
-        this.translator.setBaseUrl(settings.apiUrl);
-        this.translator.setApiKey(settings.apiKey);
+    private async saveSettings(): Promise<void> {
+        const newSettings: PluginSettings = {
+            apiUrl: this.apiUrlInput.value,
+            apiKey: this.apiKeyInput.value,
+            sourceLang: this.sourceLangSelect.value,
+            targetLang: this.targetLangSelect.value
+        };
+
+        this.settings = newSettings;
+        this.translator.setBaseUrl(newSettings.apiUrl);
+        this.translator.setApiKey(newSettings.apiKey);
 
         try {
-            await this.saveData(STORAGE_NAME, settings);
+            await this.saveData(STORAGE_NAME, newSettings);
+            showMessage(`[${this.name}] settings saved`, 2000);
         } catch (e: any) {
             showMessage(`[${this.name}] save settings fail: ${e.message}`);
-        }
-    }
-
-    openSetting(): void {
-        const dialog = new Dialog({
-            title: `${this.i18n.pluginName} - ${this.i18n.settings}`,
-            width: "600px",
-            content: "<div class=\"libre-translate-settings\" style=\"padding: 20px;\"></div>"
-        });
-
-        const container = dialog.element.querySelector(".libre-translate-settings");
-        if (container) {
-            this.settingsPanel = new SettingsPanel(
-                this.app,
-                this.settings,
-                (newSettings) => this.saveSettings(newSettings)
-            );
-            container.appendChild(this.settingsPanel.getSettingElement());
-            this.settingsPanel.loadLanguages();
         }
     }
 
