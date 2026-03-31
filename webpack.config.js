@@ -8,6 +8,12 @@ const CopyPlugin = require("copy-webpack-plugin");
 module.exports = (env, argv) => {
     const isPro = argv.mode === "production";
     const plugins = [
+        new webpack.DefinePlugin({
+            "process.env": JSON.stringify({}),
+            "process": JSON.stringify({
+                env: {}
+            })
+        }),
         new MiniCssExtractPlugin({
             filename: isPro ? "dist/index.css" : "style.css",
         })

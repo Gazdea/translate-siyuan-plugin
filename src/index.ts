@@ -68,6 +68,52 @@ class LibreTranslatePlugin extends Plugin {
         const apiKeyInput = document.createElement("input");
         const sourceLangSelect = document.createElement("select");
         const targetLangSelect = document.createElement("select");
+        const testConnectionBtn = document.createElement("button");
+        const connectionStatus = document.createElement("span");
+
+        apiUrlInput.className = "b3-text-field fn__block";
+        apiUrlInput.value = this.data[STORAGE_NAME].apiUrl || DEFAULT_SETTINGS.apiUrl;
+
+        apiKeyInput.className = "b3-text-field fn__block";
+        apiKeyInput.type = "password";
+        apiKeyInput.value = this.data[STORAGE_NAME].apiKey || "";
+
+        sourceLangSelect.className = "b3-select fn__block";
+        sourceLangSelect.innerHTML = `<option value="auto">${this.i18n.auto}</option>`;
+        sourceLangSelect.value = this.data[STORAGE_NAME].sourceLang || DEFAULT_SETTINGS.sourceLang;
+
+        targetLangSelect.className = "b3-select fn__block";
+        targetLangSelect.innerHTML = `
+            <option value="en">English (en)</option>
+            <option value="ru">Russian (ru)</option>
+            <option value="zh">Chinese (zh)</option>
+            <option value="es">Spanish (es)</option>
+            <option value="fr">French (fr)</option>
+            <option value="de">German (de)</option>`;
+        targetLangSelect.value = this.data[STORAGE_NAME].targetLang || DEFAULT_SETTINGS.targetLang;
+
+        testConnectionBtn.className = "b3-button b3-button--outline";
+        testConnectionBtn.textContent = this.i18n.connectionTest || "Test Connection";
+        testConnectionBtn.addEventListener("click", async () => {
+            testConnectionBtn.disabled = true;
+            connectionStatus.textContent = this.i18n.loading || "Loading...";
+            connectionStatus.className = "fn__margin-top";
+            try {
+                const tempTranslator = new LibreTranslate(apiUrlInput.value, apiKeyInput.value);
+                const ok = await tempTranslator.healthCheck();
+                if (ok) {
+                    connectionStatus.textContent = this.i18n.connectionOk || "Connection successful";
+                    connectionStatus.className = "fn__margin-top fn__success";
+                } else {
+                    connectionStatus.textContent = this.i18n.connectionError || "Connection failed";
+                    connectionStatus.className = "fn__margin-top fn__error";
+                }
+            } catch (e) {
+                connectionStatus.textContent = this.i18n.connectionError || "Connection failed";
+                connectionStatus.className = "fn__margin-top fn__error";
+            }
+            testConnectionBtn.disabled = false;
+        });
 
         this.setting = new Setting({
             confirmCallback: () => {
@@ -85,8 +131,7 @@ class LibreTranslatePlugin extends Plugin {
             direction: "row",
             description: "LibreTranslate server URL",
             createActionElement: () => {
-                apiUrlInput.className = "b3-text-field fn__block";
-                apiUrlInput.value = this.data[STORAGE_NAME].apiUrl;
+                apiUrlInput.style.width = "100%";
                 return apiUrlInput;
             }
         });
@@ -96,9 +141,7 @@ class LibreTranslatePlugin extends Plugin {
             direction: "row",
             description: "Optional API key",
             createActionElement: () => {
-                apiKeyInput.className = "b3-text-field fn__block";
-                apiKeyInput.type = "password";
-                apiKeyInput.value = this.data[STORAGE_NAME].apiKey;
+                apiKeyInput.style.width = "100%";
                 return apiKeyInput;
             }
         });
@@ -108,9 +151,7 @@ class LibreTranslatePlugin extends Plugin {
             direction: "row",
             description: "Select source language",
             createActionElement: () => {
-                sourceLangSelect.className = "b3-select fn__block";
-                sourceLangSelect.innerHTML = `<option value="auto">${this.i18n.auto}</option>`;
-                sourceLangSelect.value = this.data[STORAGE_NAME].sourceLang;
+                sourceLangSelect.style.width = "100%";
                 return sourceLangSelect;
             }
         });
@@ -120,17 +161,24 @@ class LibreTranslatePlugin extends Plugin {
             direction: "row",
             description: "Select target language",
             createActionElement: () => {
-                targetLangSelect.className = "b3-select fn__block";
-                targetLangSelect.innerHTML = `
-                    <option value="en">English (en)</option>
-                    <option value="ru">Russian (ru)</option>
-                    <option value="zh">Chinese (zh)</option>
-                    <option value="es">Spanish (es)</option>
-                    <option value="fr">French (fr)</option>
-                    <option value="de">German (de)</option>`;
-                targetLangSelect.value = this.data[STORAGE_NAME].targetLang;
+                targetLangSelect.style.width = "100%";
                 return targetLangSelect;
             }
+        });
+
+        this.setting.addItem({
+            title: "Test Connection",
+            direction: "row",
+            actionElement: testConnectionBtn,
+        });
+
+        this.setting.addItem({
+            title: "",
+            direction: "row",
+            createActionElement: () => {
+                connectionStatus.style.display = "block";
+                return connectionStatus;
+            },
         });
     }
 
@@ -172,9 +220,11 @@ class LibreTranslatePlugin extends Plugin {
     private handleClickEditorContent(event: any): void {
         const detail = event.detail;
         const menu = detail.menu as Menu;
-        const selectedText = window.getSelection()?.toString();
+        
+        const selection = window.getSelection();
+        const selectedText = selection && selection.rangeCount > 0 ? selection.toString().trim() : "";
 
-        if (selectedText && selectedText.trim()) {
+        if (selectedText) {
             menu.addItem({
                 icon: "iconLibreTranslate",
                 label: this.i18n.translate,
@@ -321,25 +371,22 @@ class TranslateDialog {
     }
 
     private createDialogContent(initialText: string): string {
-        const app = (window as any).app;
-        const i18n = app?.plugins?.[0]?.i18n || {};
-        
         return `
-<div class="libre-translate-dialog" style="display:flex;flex-direction:column;height:100%;padding:16px;box-sizing:border-box;">
-    <div class="libre-translate-dialog__header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
-        <div class="libre-translate-dialog__langs" style="display:flex;align-items:center;gap:12px;">
-            <div class="libre-translate-dialog__lang" style="display:flex;flex-direction:column;gap:4px;">
-                <label style="font-size:12px;color:var(--b3-theme-on-surface-light);">Source</label>
-                <select class="b3-select" id="sourceLang" style="min-width:150px;">
+<div class="libre-translate-dialog">
+    <div class="libre-translate-dialog__header">
+        <div class="libre-translate-dialog__langs">
+            <div class="libre-translate-dialog__lang">
+                <label>Source</label>
+                <select class="b3-select" id="sourceLang">
                     <option value="auto">Auto</option>
                 </select>
             </div>
             <button class="b3-button b3-button--outline" id="swapBtn" title="Swap">
                 <svg style="width:16px;height:16px;"><use xlink:href="#iconSwap"></use></svg>
             </button>
-            <div class="libre-translate-dialog__lang" style="display:flex;flex-direction:column;gap:4px;">
-                <label style="font-size:12px;color:var(--b3-theme-on-surface-light);">Target</label>
-                <select class="b3-select" id="targetLang" style="min-width:150px;">
+            <div class="libre-translate-dialog__lang">
+                <label>Target</label>
+                <select class="b3-select" id="targetLang">
                     <option value="en">English</option>
                     <option value="ru">Russian</option>
                     <option value="zh">Chinese</option>
@@ -348,23 +395,23 @@ class TranslateDialog {
         </div>
         <button class="b3-button b3-button--primary" id="translateBtn">Translate</button>
     </div>
-    <div class="libre-translate-dialog__body" style="display:flex;flex:1;gap:16px;min-height:0;">
-        <div class="libre-translate-dialog__pane" style="flex:1;display:flex;flex-direction:column;min-width:0;">
-            <div style="font-size:12px;font-weight:600;margin-bottom:8px;">Source Text</div>
-            <textarea class="libre-translate-dialog__textarea" id="sourceText" style="flex:1;width:100%;min-height:150px;padding:12px;border:1px solid var(--b3-border-color);border-radius:4px;background:var(--b3-theme-background);color:var(--b3-theme-on-background);font-size:14px;line-height:1.6;resize:none;box-sizing:border-box;font-family:inherit;">${this.escapeHtml(initialText)}</textarea>
+    <div class="libre-translate-dialog__body">
+        <div class="libre-translate-dialog__pane">
+            <div class="libre-translate-dialog__pane-header">Source Text</div>
+            <textarea class="libre-translate-dialog__textarea" id="sourceText">${this.escapeHtml(initialText)}</textarea>
         </div>
-        <div class="libre-translate-dialog__pane" style="flex:1;display:flex;flex-direction:column;min-width:0;">
-            <div style="font-size:12px;font-weight:600;margin-bottom:8px;">Translated Text</div>
-            <textarea class="libre-translate-dialog__textarea" id="translatedText" style="flex:1;width:100%;min-height:150px;padding:12px;border:1px solid var(--b3-border-color);border-radius:4px;background:var(--b3-theme-background);color:var(--b3-theme-on-background);font-size:14px;line-height:1.6;resize:none;box-sizing:border-box;font-family:inherit;" readonly></textarea>
+        <div class="libre-translate-dialog__pane">
+            <div class="libre-translate-dialog__pane-header">Translated Text</div>
+            <textarea class="libre-translate-dialog__textarea" id="translatedText" readonly></textarea>
         </div>
     </div>
-    <div class="libre-translate-dialog__footer" style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;">
-        <div class="libre-translate-dialog__loading" id="loading" style="display:none;align-items:center;gap:8px;color:var(--b3-theme-primary);">
+    <div class="libre-translate-dialog__footer">
+        <div class="libre-translate-dialog__loading" id="loading">
             <svg class="fn__spin" style="width:16px;height:16px;"><use xlink:href="#iconLoading"></use></svg>
             <span>Loading...</span>
         </div>
         <div style="flex:1;"></div>
-        <div class="libre-translate-dialog__buttons" style="display:flex;gap:8px;">
+        <div class="libre-translate-dialog__buttons">
             <button class="b3-button" id="clearBtn">Clear</button>
             <button class="b3-button" id="copyBtn">Copy</button>
             <button class="b3-button b3-button--primary" id="replaceBtn">Replace</button>

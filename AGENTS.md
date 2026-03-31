@@ -25,6 +25,7 @@ translateSiyuanPlugin/
 ├── preview.png          # Preview image (1024x768, max 200KB)
 ├── README.md            # English documentation
 ├── README_zh_CN.md      # Chinese documentation
+├── LICENSE              # License file
 ├── src/
 │   ├── index.ts         # Main plugin class (511 lines)
 │   ├── index.scss       # SCSS styles for dialog
@@ -40,7 +41,10 @@ translateSiyuanPlugin/
 │   ├── icon.png
 │   ├── preview.png
 │   ├── README.md
+│   ├── README_zh_CN.md
 │   └── i18n/
+│       ├── en_US.json
+│       └── zh_CN.json
 └── node_modules/
 ```
 
@@ -52,6 +56,831 @@ Use semantic versioning:
 - `0.0.x` - bug fixes
 - `0.x.0` - new features
 - `x.0.0` - major changes
+
+---
+
+# PART 1: PLUGIN-SAMPLE REFERENCE (Complete SiYuan Plugin API)
+
+The following sections document ALL aspects of the SiYuan plugin system based on plugin-sample and petal API.
+
+---
+
+## Lifecycle Methods
+
+The plugin has a specific lifecycle that must be followed:
+
+```typescript
+class MyPlugin extends Plugin {
+    constructor(app: App) {
+        super(app);
+        // Bind event handlers here
+        this.boundHandler = this.handler.bind(this);
+    }
+
+    onload() {
+        // Called when plugin is loaded
+        // 1. Initialize data defaults
+        // 2. Load stored data
+        // 3. Add icons, topbar, docks, tabs
+        // 4. Register event listeners
+        // 5. Initialize settings
+    }
+
+    onLayoutReady() {
+        // Called when layout is ready (UI is rendered)
+        // Use for operations that require UI elements
+    }
+
+    onunload() {
+        // Called when plugin is disabled
+        // Unregister event listeners
+    }
+
+    uninstall() {
+        // Called when plugin is uninstalled
+        // Remove stored data
+    }
+
+    onDataChanged() {
+        // Called when stored data changes
+        // Can auto-disable/re-enable plugin
+    }
+}
+```
+
+---
+
+## Data Storage
+
+```typescript
+const STORAGE_NAME = "config";
+
+class MyPlugin extends Plugin {
+    async onload() {
+        // 1. Initialize with defaults FIRST
+        this.data[STORAGE_NAME] = {
+            apiUrl: "http://localhost:5000",
+            apiKey: "",
+            sourceLang: "auto",
+            targetLang: "en"
+        };
+
+        // 2. Load from storage (merges with defaults)
+        await this.loadData(STORAGE_NAME).catch(e => {
+            console.log(`[${this.name}] load data fail:`, e);
+        });
+
+        // 3. Use stored data
+        const settings = this.data[STORAGE_NAME];
+    }
+
+    async saveSettings(newData) {
+        // Update in-memory data
+        this.data[STORAGE_NAME] = newData;
+
+        // Persist to storage
+        await this.saveData(STORAGE_NAME, newData);
+    }
+
+    async uninstall() {
+        // Clean up stored data
+        await this.removeData(STORAGE_NAME);
+    }
+}
+```
+
+---
+
+## Settings API (Setting Class)
+
+The Setting class manages plugin configuration in SiYuan settings panel.
+
+**Correct Pattern (from plugin-sample)**:
+```typescript
+class MyPlugin extends Plugin {
+    private initSettings(): void {
+        // CRITICAL: Create elements as LOCAL variables
+        const textareaElement = document.createElement("textarea");
+        
+        this.setting = new Setting({
+            confirmCallback: () => {
+                // Save data when user clicks "Confirm"
+                this.saveData(STORAGE_NAME, {
+                    readonlyText: textareaElement.value
+                }).catch(e => {
+                    showMessage(`[${this.name}] save fail:`, e);
+                });
+            }
+        });
+
+        this.setting.addItem({
+            title: "Setting Title",
+            direction: "row",  // or "column"
+            description: "Setting description",
+            createActionElement: () => {
+                // Configure and return the element
+                textareaElement.className = "b3-text-field fn__block";
+                textareaElement.value = this.data[STORAGE_NAME].someField;
+                return textareaElement;
+            }
+        });
+
+        // For buttons that don't need input
+        const btnElement = document.createElement("button");
+        btnElement.className = "b3-button b3-button--outline";
+        btnElement.textContent = "Click Me";
+        btnElement.addEventListener("click", () => {
+            // Action
+        });
+        
+        this.setting.addItem({
+            title: "Action",
+            actionElement: btnElement,
+        });
+    }
+}
+```
+
+**Key Rules**:
+1. Create form elements as LOCAL variables in `initSettings()`
+2. Use `createActionElement()` only to configure and return element
+3. Pass element reference to save function via closure or parameters
+4. Use `this.data[STORAGE_NAME]` for reading initial values
+5. Initialize `this.setting` only once
+
+---
+
+## Top Bar
+
+Add buttons to the top bar:
+
+```typescript
+this.addTopBar({
+    icon: "iconFace",      // SVG id or full SVG tag
+    title: this.i18n.addTopBarIcon,  // Tooltip
+    position: "right",     // "left" or "right"
+    callback: (event: MouseEvent) => {
+        // Handle click
+    }
+});
+```
+
+---
+
+## Status Bar
+
+Add elements to the status bar:
+
+```typescript
+const statusElement = document.createElement("div");
+statusElement.className = "toolbar__item";
+statusElement.textContent = "Status";
+statusElement.addEventListener("click", () => {
+    // Handle click
+});
+
+this.addStatusBar({
+    element: statusElement,
+    position: "right"  // or "left"
+});
+```
+
+---
+
+## Icons (SVG)
+
+Add custom SVG icons:
+
+```typescript
+this.addIcons(`
+<symbol id="iconMyPlugin" viewBox="0 0 32 32">
+    <path d="M16 3C8.832 3 3 8.832 3 16..."/>
+</symbol>
+<symbol id="iconSaving" viewBox="0 0 32 32">
+    <path d="M20 13.333..."/>
+</symbol>
+`);
+```
+
+---
+
+## Commands (Hotkeys)
+
+Register keyboard commands:
+
+```typescript
+this.addCommand({
+    langKey: "showDialog",      // i18n key
+    hotkey: "⇧⌘O",              // Mac-style hotkey
+    callback: () => {
+        this.showDialog();
+    }
+});
+
+// With different callbacks based on context
+this.addCommand({
+    langKey: "getTab",
+    hotkey: "⇧⌘M",
+    globalCallback: () => { /* app not focused */ },
+    fileTreeCallback: (files) => { /* focus on file tree */ },
+    editorCallback: (protyle) => { /* focus on editor */ },
+    dockCallback: (element) => { /* focus on dock */ },
+});
+```
+
+**Hotkey Format** (Mac symbols):
+- ⌘ = Ctrl (or Command on Mac)
+- ⇧ = Shift
+- ⌥ = Alt
+- ⇥ = Tab
+- ⌫ = Backspace
+- ⌦ = Delete
+- ↩ = Enter
+
+---
+
+## Custom Tabs
+
+Create custom tab content:
+
+```typescript
+const TAB_TYPE = "custom_tab";
+
+this.custom = this.addTab({
+    type: TAB_TYPE,
+    init() {
+        this.element.innerHTML = `<div>${this.data.text}</div>`;
+    },
+    beforeDestroy() {
+        console.log("before destroy");
+    },
+    destroy() {
+        console.log("destroy");
+    },
+    resize() {
+        console.log("resize");
+    },
+    update() {
+        console.log("update");
+    }
+});
+```
+
+Open custom tab:
+```typescript
+openTab({
+    app: this.app,
+    custom: {
+        id: this.name + TAB_TYPE,
+        icon: "iconFace",
+        title: "Custom Tab",
+        data: { text: "Hello" }
+    }
+});
+```
+
+---
+
+## Docks
+
+Create dock panels:
+
+```typescript
+const DOCK_TYPE = "dock_tab";
+
+this.addDock({
+    config: {
+        position: "LeftBottom",  // "LeftTop" | "LeftBottom" | "RightTop" | "RightBottom" | "BottomLeft" | "BottomRight"
+        size: { width: 200, height: 0 },
+        icon: "iconSaving",
+        title: "Custom Dock",
+        hotkey: "⌥⌘W",
+    },
+    data: {
+        text: "Dock content"
+    },
+    type: DOCK_TYPE,
+    init: (dock) => {
+        dock.element.innerHTML = `<div class="fn__flex-1">${dock.data.text}</div>`;
+    },
+    destroy() {
+        console.log("destroy dock");
+    },
+    resize() {
+        console.log("resize dock");
+    },
+    update() {
+        console.log("update dock");
+    }
+});
+```
+
+---
+
+## Event Bus (Events)
+
+Subscribe to SiYuan events:
+
+```typescript
+// Bind in constructor for proper cleanup
+this.blockIconEventBindThis = this.blockIconEvent.bind(this);
+
+onload() {
+    // Editor events
+    this.eventBus.on("click-editorcontent", this.handleClick);
+    this.eventBus.on("click-blockicon", this.blockIconEventBindThis);
+    this.eventBus.on("click-editortitleicon", this.handleEvent);
+    this.eventBus.on("click-pdf", this.handleEvent);
+    
+    // Protyle lifecycle
+    this.eventBus.on("loaded-protyle-static", this.handleEvent);
+    this.eventBus.on("loaded-protyle-dynamic", this.handleEvent);
+    this.eventBus.on("switch-protyle", this.handleEvent);
+    this.eventBus.on("destroy-protyle", this.handleEvent);
+    
+    // Menu events
+    this.eventBus.on("open-menu-doctree", this.handleEvent);
+    this.eventBus.on("open-menu-blockref", this.handleEvent);
+    this.eventBus.on("open-menu-link", this.handleEvent);
+    this.eventBus.on("open-menu-image", this.handleEvent);
+    this.eventBus.on("open-menu-tag", this.handleEvent);
+    this.eventBus.on("open-menu-av", this.handleEvent);
+    this.eventBus.on("open-menu-content", this.handleEvent);
+    
+    // Paste event (can modify pasted content)
+    this.eventBus.on("paste", this.handlePaste);
+    
+    // Search
+    this.eventBus.on("input-search", this.handleEvent);
+    
+    // WebSocket
+    this.eventBus.on("ws-main", this.handleEvent);
+    
+    // Notebook
+    this.eventBus.on("opened-notebook", this.handleEvent);
+    this.eventBus.on("closed-notebook", this.handleEvent);
+    
+    // URL protocol
+    this.eventBus.on("open-siyuan-url-plugin", this.handleEvent);
+    this.eventBus.on("open-siyuan-url-block", this.handleEvent);
+}
+
+onunload() {
+    // MUST unsubscribe from all events
+    this.eventBus.off("click-editorcontent", this.handleClick);
+    this.eventBus.off("click-blockicon", this.blockIconEventBindThis);
+    // ... all other events
+}
+```
+
+**Event Detail Types**:
+```typescript
+// click-editorcontent
+{ protyle: IProtyle, event: MouseEvent }
+
+// click-blockicon
+{ menu: subMenu, protyle: IProtyle, blockElements: HTMLElement[] }
+
+// click-editortitleicon
+{ menu: subMenu, protyle: IProtyle, data: IGetDocInfo }
+
+// paste
+{ 
+    protyle: IProtyle,
+    resolve: (value) => void,
+    textHTML: string,
+    textPlain: string,
+    siyuanHTML: string,
+    files: FileList | DataTransferItemList
+}
+
+// ws-main
+{ cmd: string, data: any, msg: string, code: number }
+
+// switch-protyle
+{ protyle: IProtyle }
+```
+
+---
+
+## Context Menu
+
+Add items to context menus:
+
+```typescript
+private handleClickEditorContent(event: any): void {
+    const detail = event.detail;
+    const menu = detail.menu as Menu;
+    
+    menu.addItem({
+        id: "my-plugin-item",
+        icon: "iconFace",           // or iconHTML for custom
+        label: this.i18n.translate,
+        click: () => {
+            // Action
+        }
+    });
+}
+```
+
+---
+
+## Dialog
+
+Create modal dialogs:
+
+```typescript
+const dialog = new Dialog({
+    title: "Dialog Title",
+    width: "80%",
+    maxWidth: "900px",
+    height: "70vh",
+    content: `<div class="b3-dialog__content">
+        <div>Content here</div>
+    </div>`,
+    destroyCallback: () => {
+        // Cleanup
+    }
+});
+
+// Bind input (Enter key)
+dialog.bindInput(inputElement, () => {
+    // Handle Enter
+});
+
+// Get elements
+dialog.element.querySelector("#elementId");
+```
+
+---
+
+## Menu
+
+Create context menus:
+
+```typescript
+const menu = new Menu("menuId", () => {
+    // Close callback
+});
+
+menu.addItem({
+    icon: "iconSettings",
+    label: "Open Setting",
+    click: () => {
+        openSetting(this.app);
+    }
+});
+
+menu.addItem({
+    label: "Submenu",
+    type: "submenu",
+    submenu: [
+        { icon: "icon1", label: "Item 1", click: () => {} },
+        { icon: "icon2", label: "Item 2", click: () => {} }
+    ]
+});
+
+menu.addSeparator();
+
+menu.addItem({
+    label: "Readonly Item",
+    type: "readonly"
+});
+
+// Desktop
+menu.open({ x: rect.right, y: rect.bottom, isLeft: true });
+
+// Mobile
+menu.fullscreen();
+```
+
+---
+
+## Editor Operations (Protyle)
+
+Work with the SiYuan editor:
+
+```typescript
+import { getAllEditor, Protyle, IOperation } from "siyuan";
+
+// Get current editor
+const editor = getAllEditor()[0];
+const protyle = editor.protyle;
+
+// Operations
+const doOperations: IOperation[] = [];
+
+// Insert
+doOperations.push({
+    id: "new-block-id",
+    action: "insert",
+    data: "<div>...</div>",
+    parentID: "parent-id",
+    previousID: "previous-id"
+});
+
+// Update
+doOperations.push({
+    id: "block-id",
+    action: "update",
+    data: '<div data-node-id="block-id">New content</div>'
+});
+
+// Delete
+doOperations.push({
+    id: "block-id",
+    action: "delete"
+});
+
+// Move
+doOperations.push({
+    id: "block-id",
+    action: "move",
+    parentID: "new-parent",
+    previousID: "sibling-id"
+});
+
+// Commit transaction
+protyle.getInstance().transaction(doOperations);
+```
+
+**All Operation Types**:
+```typescript
+type TOperation =
+    | "insert"
+    | "update"
+    | "delete"
+    | "move"
+    | "foldHeading"
+    | "unfoldHeading"
+    | "setAttrs"
+    | "updateAttrs"
+    | "append"
+    | "insertAttrViewBlock"
+    | "removeAttrViewBlock"
+    | "addAttrViewCol"
+    | "removeAttrViewCol"
+    | "addFlashcards"
+    | "removeFlashcards"
+    | "updateAttrViewCell"
+    | "updateAttrViewCol"
+    | "updateAttrViewColTemplate"
+    | "sortAttrViewRow"
+    | "sortAttrViewCol"
+    | "sortAttrViewKey"
+    | "setAttrViewColPin"
+    | "setAttrViewColHidden"
+    | "setAttrViewColWrap"
+    | "setAttrViewColWidth"
+    | "updateAttrViewColOptions"
+    | "removeAttrViewColOption"
+    | "updateAttrViewColOption"
+    | "setAttrViewName"
+    | "doUpdateUpdated"
+    | "duplicateAttrViewKey"
+    | "setAttrViewColIcon"
+    | "setAttrViewFilters"
+    | "setAttrViewSorts"
+    | "setAttrViewColCalc"
+    | "updateAttrViewColNumberFormat"
+    | "replaceAttrViewBlock"
+    | "addAttrViewView"
+    | "setAttrViewViewName"
+    | "removeAttrViewView"
+    | "setAttrViewViewIcon"
+    | "duplicateAttrViewView"
+    | "sortAttrViewView"
+    | "setAttrViewPageSize"
+    | "updateAttrViewColRelation"
+    | "moveOutlineHeading"
+    | "updateAttrViewColRollup"
+    | "hideAttrViewName"
+    | "setAttrViewCardSize"
+    | "setAttrViewCardAspectRatio"
+    | "setAttrViewCoverFrom"
+    | "setAttrViewCoverFromAssetKeyID"
+    | "setAttrViewFitImage"
+    | "setAttrViewShowIcon"
+    | "setAttrViewWrapField"
+    | "setAttrViewColDateFillCreated"
+    | "setAttrViewColDateFillSpecificTime"
+    | "setAttrViewViewDesc"
+    | "setAttrViewColDesc"
+    | "setAttrViewBlockView"
+    | "setAttrViewGroup"
+    | "removeAttrViewGroup"
+    | "hideAttrViewAllGroups"
+    | "syncAttrViewTableColWidth"
+    | "hideAttrViewGroup"
+    | "sortAttrViewGroup"
+    | "foldAttrViewGroup"
+    | "setAttrViewDisplayFieldName"
+    | "setAttrViewFillColBackgroundColor"
+    | "setAttrViewUpdatedIncludeTime"
+    | "setAttrViewCreatedIncludeTime";
+```
+
+---
+
+## Opening Tabs
+
+```typescript
+// Document tab
+openTab({
+    app: this.app,
+    doc: { id: "block-id" }
+});
+
+// PDF tab
+openTab({
+    app: this.app,
+    pdf: { path: "assets/file.pdf", page: 1 }
+});
+
+// Asset tab
+openTab({
+    app: this.app,
+    asset: { path: "assets/image.png" }
+});
+
+// Search tab
+openTab({
+    app: this.app,
+    search: { k: "search term" }
+});
+
+// Card tab
+openTab({
+    app: this.app,
+    card: { type: "all" }
+});
+
+// Custom tab
+openTab({
+    app: this.app,
+    custom: {
+        id: "plugin-name-tab-type",
+        icon: "iconFace",
+        title: "Title",
+        data: { any: "data" }
+    }
+});
+```
+
+---
+
+## Utility Functions
+
+```typescript
+import { 
+    showMessage,
+    confirm,
+    fetchPost,
+    fetchGet,
+    fetchSyncPost,
+    openSetting,
+    openAttributePanel,
+    openMobileFileById,
+    openWindow,
+    lockScreen,
+    exitSiYuan,
+    saveLayout,
+    getFrontend,
+    getBackend,
+    getAllEditor,
+    getAllTabs,
+    getModelByDockType,
+    getActiveTab,
+    getActiveEditor,
+    adaptHotkey,
+    globalCommand
+} from "siyuan";
+
+// Show message
+showMessage("Text", 2000, "info");  // timeout, type
+
+// Confirm dialog
+confirm("Title", "Message", () => {
+    // Confirm action
+}, () => {
+    // Cancel action
+});
+
+// API calls
+fetchPost("/api/endpoint", { data: "value" }, (response) => {
+    console.log(response.data);
+});
+
+// Get frontend/backend
+const frontend = getFrontend();  // "desktop" | "mobile" | "browser-desktop" | etc
+const backend = getBackend();     // "windows" | "linux" | "darwin" | "android" | etc
+
+// Adapt hotkey for OS
+adaptHotkey("⌘A");  // Returns "Ctrl+A" on Windows/Linux
+
+// Open setting panel
+openSetting(this.app);
+
+// Open attribute panel
+openAttributePanel({
+    nodeElement: element,
+    protyle: protyle,
+    focusName: "bookmark"  // "bookmark" | "name" | "alias" | "memo" | "av" | "custom"
+});
+
+// Save layout
+saveLayout(() => {
+    showMessage("Layout saved");
+});
+
+// Lock screen
+lockScreen(this.app);
+
+// Exit application
+exitSiYuan();
+```
+
+---
+
+## Protyle Options
+
+Customize editor toolbar and options:
+
+```typescript
+onload() {
+    // Custom slash commands
+    this.protyleSlash = [{
+        filter: ["insert emoji 😊", "插入表情 😊"],
+        html: `<div class="b3-list-item__first">${this.i18n.insertEmoji}</div>`,
+        id: "insertEmoji",
+        callback(protyle, nodeElement) {
+            protyle.insert("😊");
+        }
+    }];
+
+    // Custom toolbar
+    this.protyleOptions = {
+        toolbar: [
+            "block-ref", "a", "|",
+            "text", "strong", "em", "u", "s", "mark",
+            "sup", "sub", "clear", "|",
+            "code", "kbd", "tag",
+            "inline-math", "inline-memo"
+        ]
+    };
+}
+
+// Update toolbar dynamically
+updateProtyleToolbar(toolbar: Array<string | IMenuItem>) {
+    toolbar.push("|");
+    toolbar.push({
+        name: "custom-action",
+        icon: "iconEmoji",
+        click(protyle) {
+            protyle.insert("😊");
+        }
+    });
+    return toolbar;
+}
+```
+
+---
+
+## Float Layer
+
+Add backlink/reference float layer:
+
+```typescript
+this.addFloatLayer({
+    refDefs: [{ refID: "block-id" }],
+    x: 100,
+    y: 100,
+    isBacklink: false
+});
+```
+
+---
+
+## Window Management
+
+```typescript
+// Open new window
+openWindow({
+    doc: { id: "block-id" },
+    width: 800,
+    height: 600,
+    position: { x: 100, y: 100 }
+});
+
+// Mobile
+openMobileFileById(this.app, "block-id");
+```
+
+---
+
+---
+
+# PART 2: PLUGIN-SPECIFIC IMPLEMENTATION
 
 ---
 
@@ -72,7 +901,7 @@ constructor() → onload() → onLayoutReady() → onunload() → uninstall()
 ```
 
 - `onload()`: Initialize data, load settings, register icons, topbar, event listeners
-- `onLayoutReady()`: Log version (DUPLICATED - see Known Issues)
+- `onLayoutReady()`: Log version
 - `onunload()`: Unregister event listeners
 - `uninstall()`: Remove stored data
 
@@ -80,11 +909,6 @@ constructor() → onload() → onLayoutReady() → onunload() → uninstall()
 - **Purpose**: Translation dialog UI
 - **Dependencies**: Uses `LibreTranslate` from `translator.ts`
 - **Lifecycle**: Created when dialog opens, destroyed on close
-- **Features**:
-  - Two-pane layout (source/target text)
-  - Language selector dropdowns
-  - Swap button
-  - Translate/Clear/Copy/Replace buttons
 
 #### 3. `LibreTranslate` (in `lib/translator.ts`)
 - **Purpose**: API client for LibreTranslate server
@@ -92,7 +916,7 @@ constructor() → onload() → onLayoutReady() → onunload() → uninstall()
   - `translate(options)`: Translate text
   - `detectLanguage(text)`: Detect source language
   - `getLanguages()`: Get available languages
-  - `healthCheck()``: Test server connectivity
+  - `healthCheck()`: Test server connectivity
 
 ---
 
@@ -114,266 +938,24 @@ Find block → Update content → protyle.transaction()
 
 ---
 
-## Key SiYuan API Integration Points
-
-### 1. Plugin Base Class
-
-```typescript
-import {Plugin, showMessage, Dialog, Menu, Setting, Protyle, IOperation, getAllEditor} from "siyuan";
-```
-- All SiYuan APIs must be imported from "siyuan" package
-
-### 2. Data Storage
-
-```typescript
-const STORAGE_NAME = "settings";
-const DEFAULT_SETTINGS = {apiUrl: "...", apiKey: "...", sourceLang: "auto", targetLang: "en"};
-
-// In onload()
-this.data[STORAGE_NAME] = {...DEFAULT_SETTINGS};
-await this.loadData(STORAGE_NAME).catch(e => {...});
-
-// Saving
-await this.saveData(STORAGE_NAME, newSettings);
-```
-
-### 3. Settings API (CRITICAL - CURRENT CODE HAS BUGS)
-
-**CORRECT Pattern (from plugin-sample)**:
-```typescript
-private initSettings(): void {
-    // Create elements as LOCAL variables
-    const apiUrlInput = document.createElement("input");
-    const apiKeyInput = document.createElement("input");
-    const sourceLangSelect = document.createElement("select");
-    const targetLangSelect = document.createElement("select");
-    
-    this.setting = new Setting({
-        confirmCallback: () => {
-            // Pass elements as parameters
-            this.saveSettings(apiUrlInput, apiKeyInput, sourceLangSelect, targetLangSelect);
-        }
-    });
-    
-    this.setting.addItem({
-        title: "API URL",
-        direction: "row",
-        description: "LibreTranslate server URL",
-        createActionElement: () => {
-            apiUrlInput.className = "b3-text-field fn__block";
-            apiUrlInput.value = this.data[STORAGE_NAME].apiUrl;
-            return apiUrlInput;
-        }
-    });
-    // ... other settings
-}
-
-private saveSettings(
-    apiUrlInput: HTMLInputElement,
-    apiKeyInput: HTMLInputElement,
-    sourceLangSelect: HTMLSelectElement,
-    targetLangSelect: HTMLSelectElement
-): void {
-    const newSettings: PluginSettings = {
-        apiUrl: apiUrlInput.value,
-        apiKey: apiKeyInput.value,
-        sourceLang: sourceLangSelect.value,
-        targetLang: targetLangSelect.value
-    };
-    this.data[STORAGE_NAME] = newSettings;
-    this.translator.setBaseUrl(newSettings.apiUrl);
-    this.translator.setApiKey(newSettings.apiKey);
-    this.saveData(STORAGE_NAME, newSettings).then(() => {
-        showMessage(`[${this.name}] settings saved`, 2000);
-    }).catch(e => {
-        showMessage(`[${this.name}] save settings fail: ${e.message}`);
-    });
-}
-```
-
-**Current Code Issues**:
-- ❌ Creates elements INSIDE `createActionElement()` (should be local variables)
-- ❌ Uses `querySelector` in `confirmCallback` (fragile, not recommended)
-- ❌ Creates new `Setting` on every `initSettings()` call (overwrites existing)
-
-### 4. Top Bar Button
-
-```typescript
-this.addTopBar({
-    icon: "iconLibreTranslate",  // Must be added via addIcons()
-    title: this.i18n.openTranslate,
-    position: "right",
-    callback: () => this.openTranslateDialog()
-});
-```
-
-### 5. Icons (SVG symbols)
-
-```typescript
-this.addIcons(`<symbol id="iconLibreTranslate" viewBox="0 0 32 32">
-<path d="M16 3C8.832 3 3 8.832 3 16s5.832 13 13 13 13-5.832 13-13S23.168 3 16 3zm0 2c6.065 0 11 4.935 11 11s-4.935 11-11 11S5 22.065 5 16 9.935 5 16 5zm-4.5 5.5v2h-3v-2h3zm6 0v2h-3v-2h3zm-6 4v2h-3v-2h3zm6 0v2h-3v-2h3zm-6 4v2h-3v-2h3zm6 0v2h-3v-2h3zm-6 4v2h-3v-2h3zm6 0v2h-3v-2h3zM12 9h2v2h-2V9zm4 0h2v2h-2V9zm4 0h2v2h-2V9zM9 13h2v2H9v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2zm-8 4h2v2H9v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2zM9 21h2v2H9v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2z"></path>
-</symbol>`);
-```
-
-### 6. Event Bus
-
-```typescript
-// Bind in constructor (CRITICAL for proper cleanup)
-this.eventBusClickEditorContent = this.handleClickEditorContent.bind(this);
-
-// Register in onload
-this.eventBus.on("click-editorcontent", this.eventBusClickEditorContent);
-
-// Unregister in onunload
-this.eventBus.off("click-editorcontent", this.eventBusClickEditorContent);
-```
-
-### 7. Context Menu (click-editorcontent event)
-
-```typescript
-private handleClickEditorContent(event: any): void {
-    const detail = event.detail;
-    const menu = detail.menu as Menu;
-    const selectedText = window.getSelection()?.toString();
-    
-    if (selectedText && selectedText.trim()) {
-        menu.addItem({
-            icon: "iconLibreTranslate",
-            label: this.i18n.translate,
-            click: () => this.openTranslateDialog(selectedText)
-        });
-    }
-}
-```
-
-**When triggered**: User right-clicks on selected text in editor
-
-### 8. Editor Text Replacement
-
-```typescript
-private async replaceTextInEditor(original: string, translated: string, protyle: Protyle | null): Promise<void> {
-    // Get current selection
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
-    
-    const range = selection.getRangeAt(0);
-    
-    // Find block element containing the selection
-    const startContainer = range.startContainer;
-    let blockElement: HTMLElement | null = null;
-    
-    if (startContainer.nodeType === Node.TEXT_NODE) {
-        let current: HTMLElement | null = startContainer.parentElement;
-        while (current) {
-            if (current.dataset.nodeId) {
-                blockElement = current;
-                break;
-            }
-            current = current.parentElement;
-        }
-    }
-    
-    if (!blockElement) {
-        blockElement = protyle.wysiwyg.element.querySelector("[data-node-id]");
-    }
-    
-    const blockId = blockElement.dataset.nodeId;
-    const editElement = blockElement.querySelector('[contenteditable="true"]') as HTMLElement;
-    
-    if (editElement) {
-        // Replace text using regex (escape special chars)
-        const currentText = editElement.textContent || "";
-        const escapedOriginal = original.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        const regex = new RegExp(escapedOriginal, "g");
-        const newText = currentText.replace(regex, translated);
-        
-        if (newText !== currentText) {
-            editElement.textContent = newText;
-            
-            // Commit change to SiYuan
-            const doOperations: IOperation[] = [];
-            doOperations.push({
-                id: blockId,
-                data: editElement.outerHTML,
-                action: "update"
-            });
-            protyle.getInstance().transaction(doOperations);
-            showMessage(this.i18n.replaced);
-        }
-    }
-}
-```
-
-### 9. Dialog
-
-```typescript
-const dialog = new Dialog({
-    title: "Translate",
-    width: "80%",
-    maxWidth: "900px",
-    height: "70vh",
-    content: `<div class="b3-dialog__content">...</div>`
-});
-```
-
-### 10. Menu
-
-```typescript
-const menu = new Menu("menuId", () => {/* close callback */});
-menu.addItem({
-    icon: "iconName",
-    label: "Label",
-    click: () => {/* action */}
-});
-// Desktop
-menu.open({x: rect.right, y: rect.bottom, isLeft: true});
-// Mobile
-menu.fullscreen();
-```
-
-### 11. Getting Active Editor
-
-```typescript
-private getEditor() {
-    const editors = getAllEditor();
-    if (editors.length === 0) {
-        showMessage("please open doc first");
-        return;
-    }
-    return editors[0];  // Returns {protyle: Protyle, notebookId: string, path: string}
-}
-```
-
----
-
 ## Internationalization (i18n)
 
 **Location**: `src/i18n/en_US.json`, `src/i18n/zh_CN.json`
 
 **Usage**: `this.i18n.keyName` in plugin code
 
-**Current keys** (44 total):
+**Current keys**:
 ```json
 {
   "pluginName": "LibreTranslate",
   "settings": "Settings",
   "apiUrl": "API URL",
-  "apiUrlDesc": "LibreTranslate server URL",
-  "apiUrlPlaceholder": "http://localhost:5000",
   "apiKey": "API Key",
-  "apiKeyDesc": "Optional API key for LibreTranslate",
-  "apiKeyPlaceholder": "Enter API key",
   "sourceLang": "Source Language",
-  "sourceLangDesc": "Select source language or use Auto Detect",
   "targetLang": "Target Language",
-  "targetLangDesc": "Select target language for translation",
   "auto": "Auto Detect",
-  "testConnection": "Test Connection",
-  "connectionOk": "Connection successful",
-  "connectionError": "Connection failed",
-  "loading": "Loading...",
-  "translate": "Translate",
   "openTranslate": "Open Translator",
+  "translate": "Translate",
   "sourceText": "Source Text",
   "translatedText": "Translated Text",
   "swap": "Swap languages",
@@ -384,7 +966,10 @@ private getEditor() {
   "replaced": "Text replaced in editor",
   "error": "Error",
   "noText": "No text to translate",
-  "languageDetected": "Detected:"
+  "languageDetected": "Detected:",
+  "connectionOk": "Connection successful",
+  "connectionError": "Connection failed",
+  "loading": "Loading..."
 }
 ```
 
@@ -432,14 +1017,6 @@ Authorization: Bearer <api_key>
 [{code: "string", name: "string", targets?: string[]}]
 ```
 
-**Error Handling**:
-```typescript
-export class LibreTranslateApiError extends Error {
-    public readonly userMessage: string;  // Shown to user
-    public readonly serverMessage: string; // Debug info
-}
-```
-
 ---
 
 ## Configuration
@@ -454,10 +1031,7 @@ export class LibreTranslateApiError extends Error {
 | backends | `all` | Desktop + mobile |
 | frontends | `all` | All frontend types |
 | displayName | `LibreTranslate` | Marketplace display |
-| description | Integration description | |
 | keywords | `translate`, `translation`, `libretranslate` | Search keywords |
-| scripts.index | `dist/index.js` | Entry point |
-| styles.index | `dist/index.css` | Styles |
 
 ### Settings Stored
 
@@ -498,8 +1072,11 @@ Use SiYuan's built-in CSS classes:
 | `b3-list-item` | List item |
 | `block__icons` | Icon container |
 | `block__logo` | Logo/brand |
+| `toolbar__item` | Toolbar item |
+| `toolbar__icon` | Toolbar icon |
+| `toolbar__text` | Toolbar text |
 
-**CSS Variables** (use for theming):
+**CSS Variables**:
 ```css
 var(--b3-theme-background)
 var(--b3-theme-on-background)
@@ -516,38 +1093,17 @@ var(--b3-card-info-background)
 
 ## Known Issues / Technical Debt
 
-1. **Setting API Pattern Violation**: Current code creates elements inside `createActionElement()` instead of as local variables. This works but violates the official SiYuan pattern.
+1. **Setting API Pattern Violation**: Current code creates elements inside `createActionElement()` instead of as local variables.
 
-2. **Duplicate Method**: `onLayoutReady()` is defined twice (lines 62-64 and 156-157). The first one logs version, second is empty.
+2. **Duplicate Method**: `onLayoutReady()` is defined twice (lines 62-64 and 156-157).
 
 3. **SCSS Unused**: Dialog uses inline styles instead of SCSS classes defined in `index.scss`.
 
-4. **Language List Hardcoded**: Target language list is hardcoded in two places:
-   - Settings: 6 languages (en, ru, zh, es, fr, de)
-   - Dialog: 3 languages (en, ru, zh)
+4. **Language List Hardcoded**: Target language list is hardcoded in settings (6 languages) vs dialog (3 languages).
 
-5. **No Language Fetch**: Plugin doesn't fetch available languages from server on startup - hardcoded list only.
+5. **No Language Fetch**: Plugin doesn't fetch available languages from server on startup.
 
 6. **No Connection Test**: Settings don't have a "Test Connection" button despite i18n key existing.
-
----
-
-## Event Bus Events Reference
-
-From plugin-sample, available events include:
-- `click-editorcontent` - Editor content click (USED by this plugin)
-- `click-blockicon` - Block icon click
-- `click-pdf` - PDF click
-- `switch-protyle` - Editor switch
-- `destroy-protyle` - Editor close
-- `loaded-protyle-static` - Static doc loaded
-- `loaded-protyle-dynamic` - Dynamic doc loaded
-- `paste` - Paste event (can modify pasted content)
-- `open-menu-*` - Various menu events
-- `input-search` - Search input
-- `ws-main` - WebSocket main events
-- `opened-notebook` / `closed-notebook` - Notebook events
-- `open-siyuan-url-*` - URL protocol events
 
 ---
 
@@ -587,7 +1143,7 @@ From `package.json`:
 ### Correct Pattern Checklist
 
 - [ ] Create Setting elements as local variables, not inside createActionElement
-- [ ] Pass elements to save function via parameters
+- [ ] Pass elements to save function via parameters or closure
 - [ ] Initialize defaults before loadData()
 - [ ] Bind event handlers in constructor
 - [ ] Unregister events in onunload()
@@ -600,8 +1156,8 @@ From `package.json`:
 
 ```
 src/
-├── index.ts          # Plugin + TranslateDialog (all in one)
-├── index.scss       # Styles (currently unused)
+├── index.ts          # Plugin + TranslateDialog
+├── index.scss       # Styles
 ├── lib/
 │   └── translator.ts # API client (independent)
 └── i18n/
@@ -609,4 +1165,57 @@ src/
     └── zh_CN.json    # Translations
 ```
 
-For a plugin this size, keeping everything in index.ts is acceptable. If the plugin grows, consider separating TranslateDialog to its own file.
+---
+
+## API Reference Summary
+
+### Plugin Class Methods
+
+| Method | Usage |
+|--------|-------|
+| `onload()` | Initialize plugin |
+| `onLayoutReady()` | After UI ready |
+| `onunload()` | Cleanup on disable |
+| `uninstall()` | Cleanup on remove |
+| `addTopBar()` | Add top bar button |
+| `addStatusBar()` | Add status bar element |
+| `addIcons()` | Add SVG icons |
+| `addTab()` | Add custom tab |
+| `addDock()` | Add dock panel |
+| `addCommand()` | Add hotkey command |
+| `addFloatLayer()` | Add float layer |
+| `loadData()` | Load stored data |
+| `saveData()` | Save data |
+| `removeData()` | Delete data |
+
+### Utility Functions
+
+| Function | Usage |
+|----------|-------|
+| `showMessage()` | Show toast message |
+| `confirm()` | Show confirm dialog |
+| `fetchPost()` | POST to API |
+| `fetchGet()` | GET from API |
+| `openTab()` | Open tab |
+| `openSetting()` | Open settings panel |
+| `openAttributePanel()` | Open attribute panel |
+| `getAllEditor()` | Get editor instances |
+| `getFrontend()` | Get frontend type |
+| `getBackend()` | Get backend type |
+| `adaptHotkey()` | Adapt hotkey to OS |
+
+### Event Types
+
+| Event | Description |
+|-------|-------------|
+| `click-editorcontent` | Click on editor content |
+| `click-blockicon` | Click on block icon |
+| `click-editortitleicon` | Click on title icon |
+| `click-pdf` | Click on PDF |
+| `loaded-protyle-static` | Static doc loaded |
+| `loaded-protyle-dynamic` | Dynamic doc loaded |
+| `switch-protyle` | Editor switched |
+| `destroy-protyle` | Editor closed |
+| `paste` | Content pasted |
+| `ws-main` | WebSocket message |
+| `open-menu-*` | Menu opened |
