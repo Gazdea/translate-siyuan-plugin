@@ -3,6 +3,7 @@ import "./index.scss";
 import {LibreTranslate} from "./lib/translator";
 
 const STORAGE_NAME = "settings";
+const PLUGIN_VERSION = "0.0.1";
 
 export interface PluginSettings {
     apiUrl: string;
@@ -33,6 +34,10 @@ class LibreTranslatePlugin extends Plugin {
     async onload() {
         this.data[STORAGE_NAME] = {...DEFAULT_SETTINGS};
 
+        await this.loadData(STORAGE_NAME).catch(e => {
+            console.log(`[${this.name}] load data [${STORAGE_NAME}] fail: `, e);
+        });
+
         this.translator.setBaseUrl(this.data[STORAGE_NAME].apiUrl);
         this.translator.setApiKey(this.data[STORAGE_NAME].apiKey);
 
@@ -52,6 +57,10 @@ class LibreTranslatePlugin extends Plugin {
         this.eventBus.on("click-editorcontent", this.eventBusClickEditorContent);
 
         this.initSettings();
+    }
+
+    async onLayoutReady() {
+        console.log(`[${this.name}] loaded version ${PLUGIN_VERSION}`);
     }
 
     private initSettings(): void {
