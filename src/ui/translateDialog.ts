@@ -148,6 +148,10 @@ export class TranslateDialog {
     }
 
     private updateLanguageSelectors(): void {
+        if (!this.sourceLangSelect || !this.targetLangSelect) {
+            return;
+        }
+
         const autoOption = `<option value="auto">${this.getI18n("auto")}</option>`;
         const options = this.languages
             .map(lang => `<option value="${lang.code}">${lang.name} (${lang.code})</option>`)
