@@ -334,7 +334,7 @@ class TranslateDialog {
     this.onReplaceCallback = options.onReplace || null;
     this.i18n = options.i18n || {};
     this.dialog = new siyuan.Dialog({
-      title: this.t("translate"),
+      title: this.t("translate") + " v1.0.0",
       width: "80%",
       maxWidth: "900px",
       height: "70vh",
@@ -580,6 +580,7 @@ class TranslateDialog {
   }
 }
 const STORAGE_NAME = "settings";
+const PLUGIN_VERSION = "1.0.0";
 class LibreTranslatePlugin extends siyuan.Plugin {
   constructor(app) {
     super(app);
@@ -592,6 +593,7 @@ class LibreTranslatePlugin extends siyuan.Plugin {
     this.eventBusPaste = this.handlePaste.bind(this);
   }
   async onload() {
+    console.log(`[LibreTranslate] Plugin v${PLUGIN_VERSION} loaded`);
     this.loadStyles();
     await this.loadSettings();
     this.translator = new LibreTranslate(this.settings.apiUrl, this.settings.apiKey);
@@ -677,7 +679,7 @@ class LibreTranslatePlugin extends siyuan.Plugin {
   }
   openSetting() {
     const dialog = new siyuan.Dialog({
-      title: `${this.i18n.pluginName} - ${this.i18n.settings}`,
+      title: `${this.i18n.pluginName} - ${this.i18n.settings} v${PLUGIN_VERSION}`,
       width: "600px",
       content: '<div class="libre-translate-settings" style="padding: 20px;"></div>'
     });

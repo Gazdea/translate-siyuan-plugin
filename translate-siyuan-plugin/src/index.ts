@@ -15,6 +15,7 @@ import {PluginSettings, SettingsPanel, DEFAULT_SETTINGS} from "./ui/settings";
 import {TranslateDialog} from "./ui/translateDialog";
 
 const STORAGE_NAME = "settings";
+const PLUGIN_VERSION = "1.0.0";
 
 class LibreTranslatePlugin extends Plugin {
 
@@ -32,6 +33,7 @@ class LibreTranslatePlugin extends Plugin {
     }
 
     async onload() {
+        console.log(`[LibreTranslate] Plugin v${PLUGIN_VERSION} loaded`);
         this.loadStyles();
 
         await this.loadSettings();
@@ -134,7 +136,7 @@ class LibreTranslatePlugin extends Plugin {
 
     openSetting(): void {
         const dialog = new Dialog({
-            title: `${this.i18n.pluginName} - ${this.i18n.settings}`,
+            title: `${this.i18n.pluginName} - ${this.i18n.settings} v${PLUGIN_VERSION}`,
             width: "600px",
             content: "<div class=\"libre-translate-settings\" style=\"padding: 20px;\"></div>"
         });

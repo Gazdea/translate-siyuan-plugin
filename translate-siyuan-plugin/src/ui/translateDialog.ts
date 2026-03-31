@@ -38,7 +38,7 @@ export class TranslateDialog {
         this.i18n = options.i18n || {};
 
         this.dialog = new Dialog({
-            title: this.t("translate"),
+            title: this.t("translate") + " v1.0.0",
             width: "80%",
             maxWidth: "900px",
             height: "70vh",
