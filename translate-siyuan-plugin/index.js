@@ -20,6 +20,9 @@ class LibreTranslate {
   setApiKey(key) {
     this.apiKey = key;
   }
+  getBaseUrl() {
+    return this.baseUrl;
+  }
   async getLanguages() {
     try {
       const response = await fetch(`${this.baseUrl}/languages`, {
@@ -419,13 +422,35 @@ class TranslateDialog {
     });
   }
   async loadLanguages() {
+    var _a, _b;
     try {
       this.languages = await this.translator.getLanguages();
       this.updateLanguageSelectors();
     } catch (e) {
       console.error("[LibreTranslate] Failed to load languages:", e);
-      this.showError(this.t("error") + ": " + e.userMessage);
+      const isConnectionError = ((_a = e.message) == null ? void 0 : _a.includes("fetch")) || ((_b = e.serverMessage) == null ? void 0 : _b.includes("Failed to fetch"));
+      if (isConnectionError) {
+        this.showError(this.t("serverNotAvailable") + " " + this.translator.getBaseUrl());
+      } else {
+        this.showError(this.t("error") + ": " + e.userMessage);
+      }
+      this.setDefaultLanguages();
     }
+  }
+  setDefaultLanguages() {
+    const autoOption = `<option value="auto">${this.t("auto")}</option>`;
+    const defaultOptions = `
+            <option value="en">English (en)</option>
+            <option value="ru">Russian (ru)</option>
+            <option value="zh">Chinese (zh)</option>
+            <option value="es">Spanish (es)</option>
+            <option value="fr">French (fr)</option>
+            <option value="de">German (de)</option>
+        `;
+    this.sourceLangSelect.innerHTML = autoOption + defaultOptions;
+    this.sourceLangSelect.value = "auto";
+    this.targetLangSelect.innerHTML = defaultOptions;
+    this.targetLangSelect.value = this.settings.targetLang || "ru";
   }
   updateLanguageSelectors() {
     const autoOption = `<option value="auto">${this.t("auto")}</option>`;

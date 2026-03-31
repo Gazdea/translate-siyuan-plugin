@@ -55,6 +55,10 @@ export class LibreTranslate {
         this.apiKey = key;
     }
 
+    public getBaseUrl(): string {
+        return this.baseUrl;
+    }
+
     public async getLanguages(): Promise<Language[]> {
         try {
             const response = await fetch(`${this.baseUrl}/languages`, {

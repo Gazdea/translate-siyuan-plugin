@@ -35,5 +35,6 @@
   "replaced": "Text replaced",
   "cancel": "Cancel",
   "save": "Save",
-  "close": "Close"
+  "close": "Close",
+  "serverNotAvailable": "Cannot connect to LibreTranslate server:"
 }

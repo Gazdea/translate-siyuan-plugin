@@ -35,5 +35,6 @@
   "replaced": "Текст заменён",
   "cancel": "Отмена",
   "save": "Сохранить",
-  "close": "Закрыть"
+  "close": "Закрыть",
+  "serverNotAvailable": "Не удалось подключиться к серверу LibreTranslate:"
 }

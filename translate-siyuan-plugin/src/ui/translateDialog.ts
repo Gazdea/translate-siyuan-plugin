@@ -149,8 +149,31 @@ export class TranslateDialog {
             this.updateLanguageSelectors();
         } catch (e: any) {
             console.error("[LibreTranslate] Failed to load languages:", e);
-            this.showError(this.t("error") + ": " + e.userMessage);
+            const isConnectionError = e.message?.includes("fetch") || e.serverMessage?.includes("Failed to fetch");
+            if (isConnectionError) {
+                this.showError(this.t("serverNotAvailable") + " " + this.translator.getBaseUrl());
+            } else {
+                this.showError(this.t("error") + ": " + e.userMessage);
+            }
+            this.setDefaultLanguages();
         }
+    }
+
+    private setDefaultLanguages(): void {
+        const autoOption = `<option value="auto">${this.t("auto")}</option>`;
+        const defaultOptions = `
+            <option value="en">English (en)</option>
+            <option value="ru">Russian (ru)</option>
+            <option value="zh">Chinese (zh)</option>
+            <option value="es">Spanish (es)</option>
+            <option value="fr">French (fr)</option>
+            <option value="de">German (de)</option>
+        `;
+        
+        this.sourceLangSelect.innerHTML = autoOption + defaultOptions;
+        this.sourceLangSelect.value = "auto";
+        this.targetLangSelect.innerHTML = defaultOptions;
+        this.targetLangSelect.value = this.settings.targetLang || "ru";
     }
 
     private updateLanguageSelectors(): void {

@@ -41,5 +41,8 @@
     "translation",
     "libretranslate",
     "перевод"
-  ]
+  ],
+  "i18n": "i18n",
+  "js": "index.js",
+  "css": "style.css"
 }
