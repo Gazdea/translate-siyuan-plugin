@@ -2,7 +2,7 @@
   "name": "translate-siyuan-plugin",
   "author": "Gazdea",
   "url": "https://github.com/Gazdea/translate-siyuan-plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "minAppVersion": "3.5.10",
   "backends": [
     "windows",

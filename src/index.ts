@@ -3,7 +3,7 @@ import "./index.scss";
 import {LibreTranslate} from "./lib/translator";
 
 const STORAGE_NAME = "settings";
-const PLUGIN_VERSION = "0.0.1";
+const PLUGIN_VERSION = "0.1.1";
 
 export interface PluginSettings {
     apiUrl: string;
