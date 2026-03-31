@@ -266,6 +266,11 @@ class SettingsPanel {
   }
   async loadLanguages() {
     if (this.languagesLoaded) return;
+    if (!this.apiUrlInput || !this.apiKeyInput || !this.sourceLangSelect || !this.targetLangSelect) {
+      console.warn("[LibreTranslate] Settings form elements not initialized yet");
+      setTimeout(() => this.loadLanguages(), 100);
+      return;
+    }
     try {
       this.translator.setBaseUrl(this.apiUrlInput.value);
       this.translator.setApiKey(this.apiKeyInput.value);
@@ -312,6 +317,10 @@ class SettingsPanel {
     this.onSaveCallback(this.currentSettings);
   }
   getSettingElement() {
+    if (!this.setting.element) {
+      console.error("[LibreTranslate] Setting.element is undefined");
+      return void 0;
+    }
     return this.setting.element;
   }
 }
@@ -583,6 +592,7 @@ class LibreTranslatePlugin extends siyuan.Plugin {
     this.eventBusPaste = this.handlePaste.bind(this);
   }
   async onload() {
+    this.loadStyles();
     await this.loadSettings();
     this.translator = new LibreTranslate(this.settings.apiUrl, this.settings.apiKey);
     this.addIcons(`<symbol id="iconLibreTranslate" viewBox="0 0 32 32">
@@ -634,6 +644,17 @@ class LibreTranslatePlugin extends siyuan.Plugin {
       siyuan.showMessage(`uninstall [${this.name}] remove data [${STORAGE_NAME}] fail: ${e.msg}`);
     });
   }
+  loadStyles() {
+    const styleId = "libre-translate-plugin-style";
+    if (document.getElementById(styleId)) {
+      return;
+    }
+    const link = document.createElement("link");
+    link.id = styleId;
+    link.rel = "stylesheet";
+    link.href = "./stage/build/plugin/translate-siyuan-plugin/style.css";
+    document.head.appendChild(link);
+  }
   async loadSettings() {
     try {
       const data = await this.loadData(STORAGE_NAME);
@@ -668,8 +689,14 @@ class LibreTranslatePlugin extends siyuan.Plugin {
         (newSettings) => this.saveSettings(newSettings),
         this.i18n
       );
-      container.appendChild(this.settingsPanel.getSettingElement());
-      this.settingsPanel.loadLanguages();
+      const settingElement = this.settingsPanel.getSettingElement();
+      if (settingElement) {
+        container.appendChild(settingElement);
+        this.settingsPanel.loadLanguages();
+      } else {
+        console.error("[LibreTranslate] Settings panel element is null/undefined");
+        siyuan.showMessage("[LibreTranslate] Failed to load settings panel");
+      }
     }
   }
   handleClickEditorContent(event) {

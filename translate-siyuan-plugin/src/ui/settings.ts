@@ -168,6 +168,12 @@ export class SettingsPanel {
     public async loadLanguages(): Promise<void> {
         if (this.languagesLoaded) return;
 
+        if (!this.apiUrlInput || !this.apiKeyInput || !this.sourceLangSelect || !this.targetLangSelect) {
+            console.warn("[LibreTranslate] Settings form elements not initialized yet");
+            setTimeout(() => this.loadLanguages(), 100);
+            return;
+        }
+
         try {
             this.translator.setBaseUrl(this.apiUrlInput.value);
             this.translator.setApiKey(this.apiKeyInput.value);
@@ -225,7 +231,11 @@ export class SettingsPanel {
         this.onSaveCallback(this.currentSettings);
     }
 
-    public getSettingElement(): HTMLElement {
+    public getSettingElement(): HTMLElement | undefined {
+        if (!this.setting.element) {
+            console.error("[LibreTranslate] Setting.element is undefined");
+            return undefined;
+        }
         return this.setting.element;
     }
 }

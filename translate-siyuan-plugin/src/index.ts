@@ -32,6 +32,8 @@ class LibreTranslatePlugin extends Plugin {
     }
 
     async onload() {
+        this.loadStyles();
+
         await this.loadSettings();
 
         this.translator = new LibreTranslate(this.settings.apiUrl, this.settings.apiKey);
@@ -94,6 +96,19 @@ class LibreTranslatePlugin extends Plugin {
         });
     }
 
+    private loadStyles(): void {
+        const styleId = "libre-translate-plugin-style";
+        if (document.getElementById(styleId)) {
+            return;
+        }
+
+        const link = document.createElement("link");
+        link.id = styleId;
+        link.rel = "stylesheet";
+        link.href = "./stage/build/plugin/translate-siyuan-plugin/style.css";
+        document.head.appendChild(link);
+    }
+
     private async loadSettings(): Promise<void> {
         try {
             const data = await this.loadData(STORAGE_NAME);
@@ -132,8 +147,15 @@ class LibreTranslatePlugin extends Plugin {
                 (newSettings) => this.saveSettings(newSettings),
                 this.i18n
             );
-            container.appendChild(this.settingsPanel.getSettingElement());
-            this.settingsPanel.loadLanguages();
+
+            const settingElement = this.settingsPanel.getSettingElement();
+            if (settingElement) {
+                container.appendChild(settingElement);
+                this.settingsPanel.loadLanguages();
+            } else {
+                console.error("[LibreTranslate] Settings panel element is null/undefined");
+                showMessage("[LibreTranslate] Failed to load settings panel");
+            }
         }
     }
 
