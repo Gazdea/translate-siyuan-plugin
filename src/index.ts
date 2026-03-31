@@ -24,11 +24,6 @@ class LibreTranslatePlugin extends Plugin {
     private translateDialog: TranslateDialog | null = null;
     private eventBusClickEditorContent: (event: any) => void;
 
-    private apiUrlInput: HTMLInputElement;
-    private apiKeyInput: HTMLInputElement;
-    private sourceLangSelect: HTMLSelectElement;
-    private targetLangSelect: HTMLSelectElement;
-
     constructor(app: any) {
         super(app);
         this.translator = new LibreTranslate(DEFAULT_SETTINGS.apiUrl, DEFAULT_SETTINGS.apiKey);
@@ -60,14 +55,14 @@ class LibreTranslatePlugin extends Plugin {
     }
 
     private initSettings(): void {
-        this.apiUrlInput = document.createElement("input");
-        this.apiKeyInput = document.createElement("input");
-        this.sourceLangSelect = document.createElement("select");
-        this.targetLangSelect = document.createElement("select");
+        const apiUrlInput = document.createElement("input");
+        const apiKeyInput = document.createElement("input");
+        const sourceLangSelect = document.createElement("select");
+        const targetLangSelect = document.createElement("select");
 
         this.setting = new Setting({
             confirmCallback: () => {
-                this.saveSettings();
+                this.saveSettings(apiUrlInput, apiKeyInput, sourceLangSelect, targetLangSelect);
             }
         });
 
@@ -76,9 +71,9 @@ class LibreTranslatePlugin extends Plugin {
             direction: "row",
             description: "LibreTranslate server URL",
             createActionElement: () => {
-                this.apiUrlInput.className = "b3-text-field fn__block";
-                this.apiUrlInput.value = this.data[STORAGE_NAME].apiUrl;
-                return this.apiUrlInput;
+                apiUrlInput.className = "b3-text-field fn__block";
+                apiUrlInput.value = this.data[STORAGE_NAME].apiUrl;
+                return apiUrlInput;
             }
         });
 
@@ -87,10 +82,10 @@ class LibreTranslatePlugin extends Plugin {
             direction: "row",
             description: "Optional API key",
             createActionElement: () => {
-                this.apiKeyInput.className = "b3-text-field fn__block";
-                this.apiKeyInput.type = "password";
-                this.apiKeyInput.value = this.data[STORAGE_NAME].apiKey;
-                return this.apiKeyInput;
+                apiKeyInput.className = "b3-text-field fn__block";
+                apiKeyInput.type = "password";
+                apiKeyInput.value = this.data[STORAGE_NAME].apiKey;
+                return apiKeyInput;
             }
         });
 
@@ -99,10 +94,10 @@ class LibreTranslatePlugin extends Plugin {
             direction: "row",
             description: "Select source language",
             createActionElement: () => {
-                this.sourceLangSelect.className = "b3-select fn__block";
-                this.sourceLangSelect.innerHTML = `<option value="auto">${this.i18n.auto}</option>`;
-                this.sourceLangSelect.value = this.data[STORAGE_NAME].sourceLang;
-                return this.sourceLangSelect;
+                sourceLangSelect.className = "b3-select fn__block";
+                sourceLangSelect.innerHTML = `<option value="auto">${this.i18n.auto}</option>`;
+                sourceLangSelect.value = this.data[STORAGE_NAME].sourceLang;
+                return sourceLangSelect;
             }
         });
 
@@ -111,16 +106,16 @@ class LibreTranslatePlugin extends Plugin {
             direction: "row",
             description: "Select target language",
             createActionElement: () => {
-                this.targetLangSelect.className = "b3-select fn__block";
-                this.targetLangSelect.innerHTML = `
+                targetLangSelect.className = "b3-select fn__block";
+                targetLangSelect.innerHTML = `
                     <option value="en">English (en)</option>
                     <option value="ru">Russian (ru)</option>
                     <option value="zh">Chinese (zh)</option>
                     <option value="es">Spanish (es)</option>
                     <option value="fr">French (fr)</option>
                     <option value="de">German (de)</option>`;
-                this.targetLangSelect.value = this.data[STORAGE_NAME].targetLang;
-                return this.targetLangSelect;
+                targetLangSelect.value = this.data[STORAGE_NAME].targetLang;
+                return targetLangSelect;
             }
         });
     }
@@ -138,12 +133,17 @@ class LibreTranslatePlugin extends Plugin {
         });
     }
 
-    private async saveSettings(): Promise<void> {
+    private async saveSettings(
+        apiUrlInput: HTMLInputElement,
+        apiKeyInput: HTMLInputElement,
+        sourceLangSelect: HTMLSelectElement,
+        targetLangSelect: HTMLSelectElement
+    ): Promise<void> {
         const newSettings: PluginSettings = {
-            apiUrl: this.apiUrlInput.value,
-            apiKey: this.apiKeyInput.value,
-            sourceLang: this.sourceLangSelect.value,
-            targetLang: this.targetLangSelect.value
+            apiUrl: apiUrlInput.value,
+            apiKey: apiKeyInput.value,
+            sourceLang: sourceLangSelect.value,
+            targetLang: targetLangSelect.value
         };
 
         this.data[STORAGE_NAME] = newSettings;
