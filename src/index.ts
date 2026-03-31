@@ -95,11 +95,14 @@ class LibreTranslatePlugin extends Plugin {
         testConnectionBtn.className = "b3-button b3-button--outline";
         testConnectionBtn.textContent = this.i18n.connectionTest || "Test Connection";
         testConnectionBtn.addEventListener("click", async () => {
+            const urlInput = document.getElementById("apiUrl-input") as HTMLInputElement;
+            const keyInput = document.getElementById("apiKey-input") as HTMLInputElement;
+            
             testConnectionBtn.disabled = true;
             connectionStatus.textContent = this.i18n.loading || "Loading...";
             connectionStatus.className = "fn__margin-top";
             try {
-                const tempTranslator = new LibreTranslate(apiUrlInput.value, apiKeyInput.value);
+                const tempTranslator = new LibreTranslate(urlInput?.value || "", keyInput?.value || "");
                 const ok = await tempTranslator.healthCheck();
                 if (ok) {
                     connectionStatus.textContent = this.i18n.connectionOk || "Connection successful";
@@ -114,6 +117,9 @@ class LibreTranslatePlugin extends Plugin {
             }
             testConnectionBtn.disabled = false;
         });
+
+        apiUrlInput.id = "apiUrl-input";
+        apiKeyInput.id = "apiKey-input";
 
         this.setting = new Setting({
             confirmCallback: () => {
@@ -131,8 +137,9 @@ class LibreTranslatePlugin extends Plugin {
             direction: "row",
             description: "LibreTranslate server URL",
             createActionElement: () => {
-                apiUrlInput.style.width = "100%";
-                return apiUrlInput;
+                const clone = apiUrlInput.cloneNode(true) as HTMLInputElement;
+                clone.style.width = "100%";
+                return clone;
             }
         });
 
@@ -141,8 +148,9 @@ class LibreTranslatePlugin extends Plugin {
             direction: "row",
             description: "Optional API key",
             createActionElement: () => {
-                apiKeyInput.style.width = "100%";
-                return apiKeyInput;
+                const clone = apiKeyInput.cloneNode(true) as HTMLInputElement;
+                clone.style.width = "100%";
+                return clone;
             }
         });
 
@@ -151,8 +159,9 @@ class LibreTranslatePlugin extends Plugin {
             direction: "row",
             description: "Select source language",
             createActionElement: () => {
-                sourceLangSelect.style.width = "100%";
-                return sourceLangSelect;
+                const clone = sourceLangSelect.cloneNode(true) as HTMLSelectElement;
+                clone.style.width = "100%";
+                return clone;
             }
         });
 
@@ -161,8 +170,9 @@ class LibreTranslatePlugin extends Plugin {
             direction: "row",
             description: "Select target language",
             createActionElement: () => {
-                targetLangSelect.style.width = "100%";
-                return targetLangSelect;
+                const clone = targetLangSelect.cloneNode(true) as HTMLSelectElement;
+                clone.style.width = "100%";
+                return clone;
             }
         });
 
