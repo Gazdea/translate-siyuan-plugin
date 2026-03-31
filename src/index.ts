@@ -64,13 +64,19 @@ class LibreTranslatePlugin extends Plugin {
     }
 
     private initSettings(): void {
+        const apiUrlInput = document.createElement("input");
+        const apiKeyInput = document.createElement("input");
+        const sourceLangSelect = document.createElement("select");
+        const targetLangSelect = document.createElement("select");
+
         this.setting = new Setting({
             confirmCallback: () => {
-                const apiUrlInput = document.querySelector(".libre-translate-setting input") as HTMLInputElement;
-                const apiKeyInput = document.querySelectorAll(".libre-translate-setting input")[1] as HTMLInputElement;
-                const sourceLangSelect = document.querySelector(".libre-translate-setting select") as HTMLSelectElement;
-                const targetLangSelect = document.querySelectorAll(".libre-translate-setting select")[1] as HTMLSelectElement;
-                this.saveSettings(apiUrlInput?.value || "", apiKeyInput?.value || "", sourceLangSelect?.value || "auto", targetLangSelect?.value || "en");
+                this.saveSettings(
+                    apiUrlInput.value,
+                    apiKeyInput.value,
+                    sourceLangSelect.value,
+                    targetLangSelect.value
+                );
             }
         });
 
@@ -79,16 +85,9 @@ class LibreTranslatePlugin extends Plugin {
             direction: "row",
             description: "LibreTranslate server URL",
             createActionElement: () => {
-                const container = document.createElement("div");
-                container.className = "libre-translate-setting";
-                
-                const input = document.createElement("input");
-                input.className = "b3-text-field fn__block";
-                input.value = this.data[STORAGE_NAME].apiUrl;
-                input.placeholder = "http://localhost:5000";
-                
-                container.appendChild(input);
-                return container;
+                apiUrlInput.className = "b3-text-field fn__block";
+                apiUrlInput.value = this.data[STORAGE_NAME].apiUrl;
+                return apiUrlInput;
             }
         });
 
@@ -97,16 +96,10 @@ class LibreTranslatePlugin extends Plugin {
             direction: "row",
             description: "Optional API key",
             createActionElement: () => {
-                const container = document.createElement("div");
-                container.className = "libre-translate-setting";
-                
-                const input = document.createElement("input");
-                input.className = "b3-text-field fn__block";
-                input.type = "password";
-                input.value = this.data[STORAGE_NAME].apiKey;
-                
-                container.appendChild(input);
-                return container;
+                apiKeyInput.className = "b3-text-field fn__block";
+                apiKeyInput.type = "password";
+                apiKeyInput.value = this.data[STORAGE_NAME].apiKey;
+                return apiKeyInput;
             }
         });
 
@@ -115,16 +108,10 @@ class LibreTranslatePlugin extends Plugin {
             direction: "row",
             description: "Select source language",
             createActionElement: () => {
-                const container = document.createElement("div");
-                container.className = "libre-translate-setting";
-                
-                const select = document.createElement("select");
-                select.className = "b3-select fn__block";
-                select.innerHTML = `<option value="auto">${this.i18n.auto}</option>`;
-                select.value = this.data[STORAGE_NAME].sourceLang;
-                
-                container.appendChild(select);
-                return container;
+                sourceLangSelect.className = "b3-select fn__block";
+                sourceLangSelect.innerHTML = `<option value="auto">${this.i18n.auto}</option>`;
+                sourceLangSelect.value = this.data[STORAGE_NAME].sourceLang;
+                return sourceLangSelect;
             }
         });
 
@@ -133,27 +120,18 @@ class LibreTranslatePlugin extends Plugin {
             direction: "row",
             description: "Select target language",
             createActionElement: () => {
-                const container = document.createElement("div");
-                container.className = "libre-translate-setting";
-                
-                const select = document.createElement("select");
-                select.className = "b3-select fn__block";
-                select.innerHTML = `
+                targetLangSelect.className = "b3-select fn__block";
+                targetLangSelect.innerHTML = `
                     <option value="en">English (en)</option>
                     <option value="ru">Russian (ru)</option>
                     <option value="zh">Chinese (zh)</option>
                     <option value="es">Spanish (es)</option>
                     <option value="fr">French (fr)</option>
                     <option value="de">German (de)</option>`;
-                select.value = this.data[STORAGE_NAME].targetLang;
-                
-                container.appendChild(select);
-                return container;
+                targetLangSelect.value = this.data[STORAGE_NAME].targetLang;
+                return targetLangSelect;
             }
         });
-    }
-
-    async onLayoutReady() {
     }
 
     onunload() {
