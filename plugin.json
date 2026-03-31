@@ -37,11 +37,5 @@
     "translate",
     "translation",
     "libretranslate"
-  ],
-  "scripts": {
-    "index": "index.js"
-  },
-  "styles": {
-    "index": "style.css"
-  }
+  ]
 }

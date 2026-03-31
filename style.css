@@ -1,1 +1,152 @@
-.libre-translate-dialog{display:flex;flex-direction:column;height:100%;padding:16px;box-sizing:border-box}.libre-translate-dialog__header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px}.libre-translate-dialog__langs{display:flex;align-items:center;gap:12px}.libre-translate-dialog__lang{display:flex;flex-direction:column;gap:4px}.libre-translate-dialog__lang label{font-size:12px;color:var(--b3-theme-on-surface-light)}.libre-translate-dialog__lang select{min-width:150px}.libre-translate-dialog__detect{font-size:11px;color:var(--b3-theme-primary)}.libre-translate-dialog__actions{display:flex;gap:8px}.libre-translate-dialog__body{display:flex;flex:1;gap:16px;min-height:0}.libre-translate-dialog__pane{flex:1;display:flex;flex-direction:column;min-width:0}.libre-translate-dialog__pane-header{font-size:12px;font-weight:600;margin-bottom:8px;color:var(--b3-theme-on-surface)}.libre-translate-dialog__textarea{flex:1;width:100%;min-height:150px;padding:12px;border:1px solid var(--b3-border-color);border-radius:4px;background:var(--b3-theme-background);color:var(--b3-theme-on-background);font-size:14px;line-height:1.6;resize:none;box-sizing:border-box;font-family:inherit}.libre-translate-dialog__textarea:focus{outline:none;border-color:var(--b3-theme-primary)}.libre-translate-dialog__textarea:read-only{background:var(--b3-card-info-background)}.libre-translate-dialog__footer{display:flex;justify-content:space-between;align-items:center;margin-top:16px}.libre-translate-dialog__loading{display:none;align-items:center;gap:8px;color:var(--b3-theme-primary)}.libre-translate-dialog__loading svg{width:16px;height:16px}.libre-translate-dialog__buttons{display:flex;gap:8px}.libre-translate-dialog__btn-text{display:inline}.libre-translate-dialog__btn-loading{display:none;align-items:center;justify-content:center}.libre-translate-dialog__btn-loading svg{width:14px;height:14px}.libre-translate-settings .b3-label{margin-bottom:16px}.libre-translate-settings .fn__margin-top{margin-top:12px}.libre-translate-settings .fn__success{color:var(--b3-theme-success)}.libre-translate-settings .fn__error{color:var(--b3-theme-error)}@media (max-width: 768px){.libre-translate-dialog__body{flex-direction:column}.libre-translate-dialog__header{flex-direction:column;align-items:stretch}.libre-translate-dialog__langs,.libre-translate-dialog__actions{justify-content:center}.libre-translate-dialog__footer{flex-direction:column-reverse;gap:12px}.libre-translate-dialog__buttons{width:100%;justify-content:center}}
+/*!********************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/.pnpm/css-loader@6.11.0_webpack@5.105.4/node_modules/css-loader/dist/cjs.js!./node_modules/.pnpm/sass-loader@12.6.0_sass@1.94.2_webpack@5.105.4/node_modules/sass-loader/dist/cjs.js!./src/index.scss ***!
+  \********************************************************************************************************************************************************************************************************************************/
+.libre-translate-dialog {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+}
+.libre-translate-dialog__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.libre-translate-dialog__langs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.libre-translate-dialog__lang {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.libre-translate-dialog__lang label {
+  font-size: 12px;
+  color: var(--b3-theme-on-surface-light);
+}
+.libre-translate-dialog__lang select {
+  min-width: 150px;
+}
+.libre-translate-dialog__detect {
+  font-size: 11px;
+  color: var(--b3-theme-primary);
+}
+.libre-translate-dialog__actions {
+  display: flex;
+  gap: 8px;
+}
+.libre-translate-dialog__body {
+  display: flex;
+  flex: 1;
+  gap: 16px;
+  min-height: 0;
+}
+.libre-translate-dialog__pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.libre-translate-dialog__pane-header {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--b3-theme-on-surface);
+}
+.libre-translate-dialog__textarea {
+  flex: 1;
+  width: 100%;
+  min-height: 150px;
+  padding: 12px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-size: 14px;
+  line-height: 1.6;
+  resize: none;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+.libre-translate-dialog__textarea:focus {
+  outline: none;
+  border-color: var(--b3-theme-primary);
+}
+.libre-translate-dialog__textarea:read-only {
+  background: var(--b3-card-info-background);
+}
+.libre-translate-dialog__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+}
+.libre-translate-dialog__loading {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  color: var(--b3-theme-primary);
+}
+.libre-translate-dialog__loading svg {
+  width: 16px;
+  height: 16px;
+}
+.libre-translate-dialog__buttons {
+  display: flex;
+  gap: 8px;
+}
+.libre-translate-dialog__btn-text {
+  display: inline;
+}
+.libre-translate-dialog__btn-loading {
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.libre-translate-dialog__btn-loading svg {
+  width: 14px;
+  height: 14px;
+}
+
+.libre-translate-settings .b3-label {
+  margin-bottom: 16px;
+}
+.libre-translate-settings .fn__margin-top {
+  margin-top: 12px;
+}
+.libre-translate-settings .fn__success {
+  color: var(--b3-theme-success);
+}
+.libre-translate-settings .fn__error {
+  color: var(--b3-theme-error);
+}
+
+@media (max-width: 768px) {
+  .libre-translate-dialog__body {
+    flex-direction: column;
+  }
+  .libre-translate-dialog__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .libre-translate-dialog__langs {
+    justify-content: center;
+  }
+  .libre-translate-dialog__actions {
+    justify-content: center;
+  }
+  .libre-translate-dialog__footer {
+    flex-direction: column-reverse;
+    gap: 12px;
+  }
+  .libre-translate-dialog__buttons {
+    width: 100%;
+    justify-content: center;
+  }
+}

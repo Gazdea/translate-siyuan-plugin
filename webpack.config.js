@@ -4,13 +4,12 @@ const webpack = require("webpack");
 const {EsbuildPlugin} = require("esbuild-loader");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
-const ZipPlugin = require("zip-webpack-plugin");
 
 module.exports = (env, argv) => {
     const isPro = argv.mode === "production";
     const plugins = [
         new MiniCssExtractPlugin({
-            filename: isPro ? "dist/index.css" : "index.css",
+            filename: isPro ? "dist/index.css" : "style.css",
         })
     ];
     let entry = {
@@ -34,14 +33,6 @@ module.exports = (env, argv) => {
                 {from: "src/i18n/", to: "./dist/i18n/"},
             ],
         }));
-        plugins.push(new ZipPlugin({
-            filename: "package.zip",
-            algorithm: "gzip",
-            include: [/dist/],
-            pathMapper: (assetPath) => {
-                return assetPath.replace("dist/", "");
-            },
-        }));
     } else {
         plugins.push(new CopyPlugin({
             patterns: [
@@ -54,7 +45,7 @@ module.exports = (env, argv) => {
         watch: !isPro,
         devtool: isPro ? false : "eval",
         output: {
-            filename: "[name].js",
+            filename: isPro ? "[name].js" : "index.js",
             path: path.resolve(__dirname),
             libraryTarget: "commonjs2",
             library: {
@@ -94,10 +85,10 @@ module.exports = (env, argv) => {
                     use: [
                         MiniCssExtractPlugin.loader,
                         {
-                            loader: "css-loader", // translates CSS into CommonJS
+                            loader: "css-loader",
                         },
                         {
-                            loader: "sass-loader", // compiles Sass to CSS
+                            loader: "sass-loader",
                         },
                     ],
                 }
